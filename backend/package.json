@@ -7,7 +7,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsx watch src/index.ts",
-    "seed": "tsx src/utils/seed.ts"
+    "seed": "tsx src/utils/seed.ts",
+    "start": "nodemon --exec tsx src/index.ts"
   },
   "keywords": [],
   "author": "",
@@ -30,7 +31,7 @@
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^22.10.6",
     "mongodb-memory-server": "^11.0.1",
-    "nodemon": "^3.1.9",
+    "nodemon": "^3.1.11",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"
   }
