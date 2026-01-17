@@ -201,11 +201,18 @@ export const getLowStockAlerts = async (req: AuthRequest, res: Response) => {
         // 1. Get all products with variants below reorderLevel
         const lowStockProducts = await Product.find({
             tenantId,
-            'variants': { $elemMatch: { $expr: { $lte: ['$stock', '$reorderLevel'] } } }
+            $expr: {
+                $anyElementTrue: {
+                    $map: {
+                        input: "$variants",
+                        as: "v",
+                        in: { $lte: ["$$v.stock", "$$v.reorderLevel"] }
+                    }
+                }
+            }
         });
 
         // 2. Get all pending Purchase Orders for this tenant
-        // POStatus.DRAFT, SENT, CONFIRMED, PARTIALLY_RECEIVED are considered "pending"
         const PurchaseOrder = mongoose.model('PurchaseOrder');
         const pendingPOs = await PurchaseOrder.find({
             tenantId,
@@ -231,7 +238,6 @@ export const getLowStockAlerts = async (req: AuthRequest, res: Response) => {
                     const pendingQty = pendingStockMap[variant.sku] || 0;
                     const willHaveStock = variant.stock + pendingQty;
 
-                    // SMART ALERT: Don't alert if pending PO will replenish stock above reorderLevel
                     if (willHaveStock <= variant.reorderLevel) {
                         alerts.push({
                             productId: product._id,
