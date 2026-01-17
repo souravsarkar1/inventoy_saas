@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import client from '../api/client';
-import { LogIn, Building2 } from 'lucide-react';
+import { LogIn, Building2, Loader2 } from 'lucide-react';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -10,15 +10,19 @@ const Login = () => {
     const [error, setError] = useState('');
     const { login } = useAuth();
     const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            setLoading(true);
             const { data } = await client.post('/auth/login', { email, password });
             login(data);
             navigate('/');
         } catch (err: any) {
             setError(err.response?.data?.message || 'Login failed');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -68,9 +72,9 @@ const Login = () => {
                         />
                     </div>
 
-                    <button type="submit" className="btn btn-primary w-full h-12 text-base">
-                        <LogIn size={20} />
-                        Sign In
+                    <button type="submit" className="btn btn-primary w-full h-12 text-base" disabled={loading}>
+                        {loading ? <Loader2 className="animate-spin" size={20} /> : <LogIn size={20} />}
+                        {loading ? 'Logging in...' : 'Sign In'}
                     </button>
                 </form>
 
