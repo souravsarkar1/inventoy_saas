@@ -151,7 +151,7 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
 // @desc    Bulk create users
 // @route   POST /api/auth/users/bulk
 export const bulkCreateUsers = async (req: AuthRequest, res: Response) => {
-    const { users } = req.body; // Array of { name, email, role }
+    const { users } = req.body;
 
     try {
         const hashedPassword = await bcrypt.hash('password123', 10);

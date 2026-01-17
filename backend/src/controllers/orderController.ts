@@ -23,28 +23,39 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
     session.startTransaction();
 
     try {
-        // 1. Check stock for all items
+        // 1. Process each item with atomic stock deduction
         for (const item of items) {
-            const product = await Product.findOne({
-                _id: item.productId,
-                tenantId: req.tenantId,
-                'variants.sku': item.sku,
-            }).session(session);
+            // Atomic check-and-update: Only decrement if stock >= quantity
+            const product = await Product.findOneAndUpdate(
+                {
+                    _id: item.productId,
+                    tenantId: req.tenantId,
+                    'variants.sku': item.sku,
+                    'variants.stock': { $gte: item.quantity } // Critical concurrency check
+                },
+                {
+                    $inc: { 'variants.$.stock': -item.quantity }
+                },
+                { session, new: true }
+            );
 
             if (!product) {
-                throw new Error(`Product variant ${item.sku} not found`);
+                // If update failed, determine why (invoking separate read only for error message)
+                const exists = await Product.findOne({
+                    _id: item.productId,
+                    tenantId: req.tenantId,
+                    'variants.sku': item.sku
+                }).session(session);
+
+                if (!exists) {
+                    throw new Error(`Product variant ${item.sku} not found`);
+                } else {
+                    const variant = exists.variants.find(v => v.sku === item.sku);
+                    throw new Error(`Insufficient stock for ${item.sku}. Available: ${variant?.stock || 0}`);
+                }
             }
 
-            const variant = product.variants.find(v => v.sku === item.sku);
-            if (!variant || variant.stock < item.quantity) {
-                throw new Error(`Insufficient stock for ${item.sku}. Available: ${variant?.stock || 0}`);
-            }
-
-            // 2. Deduct stock
-            variant.stock -= item.quantity;
-            await product.save({ session });
-
-            // 3. Log movement
+            // 2. Log movement (must happen if stock was successfully deducted)
             await StockMovement.create([{
                 tenantId: req.tenantId,
                 productId: product._id,
@@ -56,7 +67,7 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
             }], { session });
         }
 
-        // 4. Create Order
+        // 3. Create Order
         const order = await Order.create([{
             tenantId: req.tenantId,
             customerName,
