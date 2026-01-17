@@ -20,6 +20,8 @@ const io = new Server(httpServer, {
     cors: {
         origin: '*',
     },
+    pingTimeout: 60000,
+    pingInterval: 25000
 });
 
 app.use(cors());
@@ -29,9 +31,11 @@ app.use(express.json());
 app.set('io', io);
 
 io.on('connection', (socket) => {
+    console.log('A user connected:', socket.id);
 
     socket.on('join-tenant', (tenantId: string) => {
         socket.join(tenantId);
+        console.log(`User joined tenant room: ${tenantId}`);
     });
 
     socket.on('disconnect', () => {
