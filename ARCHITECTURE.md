@@ -445,7 +445,6 @@ describe('Tenant Isolation', () => {
 
 | Limitation | Impact | Mitigation Plan |
 |------------|--------|-----------------|
-| **No Real-Time Sync** | Users must refresh to see updates | Implement Socket.io for stock changes |
 | **Limited Reporting** | Basic analytics only | Add custom report builder |
 | **No Audit Logs** | Can't track who changed what | Add `AuditLog` collection |
 | **Single Region** | High latency for global users | Deploy to multiple AWS regions |
