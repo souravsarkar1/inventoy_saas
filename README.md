@@ -45,7 +45,7 @@ A robust, scalable SaaS platform for managing inventory, suppliers, and orders w
 ### 1. Clone & Install
 ```bash
 git clone <repository-url>
-cd inventory-saas
+cd inventoy-saas
 
 # Install Backend Dependencies
 cd backend
